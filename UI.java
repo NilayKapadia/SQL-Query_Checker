@@ -9,12 +9,12 @@ import javax.sql.*;
 
 public class Gui implements ActionListener{
 	
-	public JButton Register,Login,Exit,OK,Reset,Reg,OKj5;
+	public JButton Register,Login,Exit,OK,Reset,Reg,OKj5,eq,eu;
 	public JFrame j1,j2,j3,j4,j5,j6;
 	public JLabel l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,lj6;
 	public JTextField t1,t2,t3;
 	public JPasswordField p1,p2,p3;
-	public JTextArea t4;
+	public JTextArea t4,t5;
 	
 	
 	public Gui(){
@@ -32,6 +32,8 @@ public class Gui implements ActionListener{
 		Reset = new JButton("Reset");
 		Reg = new JButton("Click To Register");
 		OKj5 = new JButton("OK");
+		eq = new JButton("Execute Query");
+		eu = new JButton("Execute Update");
 		
 		
 		l1 = new JLabel("Username");
@@ -45,6 +47,7 @@ public class Gui implements ActionListener{
 		
 		t1 = new JTextField(20);
 		t4 = new JTextArea(50,50);
+		t5 = new JTextArea(30,30);
 		p1 = new JPasswordField(15);
 		t2 = new JTextField(20);
 		t3 = new JTextField(20);
@@ -66,6 +69,8 @@ public class Gui implements ActionListener{
 		Reset.addActionListener(this);
 		Reg.addActionListener(this);
 		OKj5.addActionListener(this);
+		eq.addActionListener(this);
+		eu.addActionListener(this);
 		
 		j1.setSize(500,500);
 		j1.setVisible(true);
@@ -145,7 +150,9 @@ public class Gui implements ActionListener{
 			DriverManager.registerDriver(new com.mysql.jdbc.Driver());
 			conn=DriverManager.getConnection("jdbc:mysql://localhost:3306/sql_editor","root","root");
 			Statement stmt=conn.createStatement();
+			Statement stmtdb=conn.createStatement();
 			int rs = stmt.executeUpdate("INSERT INTO user_pass VALUES('"+s3+"','"+s1+"','"+s2+"');");
+			int rsdb = stmtdb.executeUpdate("create database "+s2);
 			}
 			catch(Exception ex){
 				ex.printStackTrace();
@@ -166,13 +173,18 @@ public class Gui implements ActionListener{
 				DriverManager.registerDriver(new com.mysql.jdbc.Driver());
 				conn1=DriverManager.getConnection("jdbc:mysql://localhost:3306/sql_editor","root","root");
 				Statement stmt1=conn1.createStatement();
+				Statement stmts2=conn1.createStatement();
 				ResultSet rs1=stmt1.executeQuery("SELECT user,pass FROM user_pass WHERE user='"+s4+"' AND pass='"+s5+"';");
+				ResultSet rss2=stmts2.executeQuery("select name from user_pass where user='"+s4+"'");
 				if(rs1.next()){
-					JFrame j6 = new JFrame("Editort Window");
+					JFrame j6 = new JFrame("Editor Window");
 					j6.setLayout(new FlowLayout());
 					j6.setExtendedState(JFrame.MAXIMIZED_BOTH);
 					j6.add(t4);
-					
+					j6.add(t5);
+					t5.setEditable(false);
+					j6.add(eq);
+					j6.add(eu);
 					j6.setVisible(true);
 					
 				}
@@ -186,6 +198,69 @@ public class Gui implements ActionListener{
 			
 			
 		}
+		if(e.getSource()==eu){
+			String query,db = null;
+			query=t4.getText();
+			System.out.println(query);
+			try{
+			Connection conn2,conndb = null;
+			Class.forName("com.mysql.jdbc.Driver");
+			DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+			conndb=DriverManager.getConnection("jdbc:mysql://localhost:3306/sql_editor","root","root");
+			Statement stmtdb=conndb.createStatement();
+			ResultSet rsdb=stmtdb.executeQuery("select name from user_pass");
+			if(rsdb.next()){
+				db=rsdb.getString("name");
+			}
+			conn2=DriverManager.getConnection("jdbc:mysql://localhost:3306/"+db+"?allowMultipleQueries=true","root","root");
+			Statement stmt2=conn2.createStatement();
+			int rs2 = stmt2.executeUpdate(query);
+			}
+			catch(Exception log1){
+				t5.append(log1.toString());
+			}
+		}
+		if(e.getSource()==eq)
+		{
+			t5.setText("");
+			String query,db = null;
+			query=t4.getText();
+			//System.out.println(query);
+			try{
+			Connection conn2,conndb = null;
+			Class.forName("com.mysql.jdbc.Driver");
+			DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+			conndb=DriverManager.getConnection("jdbc:mysql://localhost:3306/sql_editor","root","root");
+			Statement stmtdb=conndb.createStatement();
+			ResultSet rsdb=stmtdb.executeQuery("select name from user_pass");
+			if(rsdb.next()){
+				db=rsdb.getString("name");
+			}
+			conn2=DriverManager.getConnection("jdbc:mysql://localhost:3306/"+db+"?allowMultipleQueries=true","root","root");
+			Statement stmt2=conn2.createStatement();
+			ResultSet rs2 = stmt2.executeQuery(query);
+			ResultSetMetaData rsm = rs2.getMetaData();
+			int colnum = rsm.getColumnCount();
+			t5.append("Value     ColumnName\n");
+			while(rs2.next()){
+				for(int i=1;i<=colnum;i++){
+					String colval = rs2.getString(i);
+					t5.append(colval+" "+rsm.getColumnName(i));
+					t5.append("\n");
+					//System.out.println(colval+" "+rsm.getColumnName(i));
+					
+				}
+			}
+			
+			}
+			catch(Exception log1){
+					t5.setForeground(Color.red);
+					t5.append(log1.toString());
+					t5.setForeground(Color.black);
+				
+			}
+		}
+		
 		
 }
 }
